@@ -178,6 +178,9 @@ def train(config, checkpoint_dir=None, fixed_config=None):
 
             lr = model.schedulers[0].get_last_lr()
 
+            print(" > val performance: f1 = {:.03f} %, nrmse = {:.03f}, iou = {:.03f} %".format(
+                np.mean(f1_scores), np.mean(nrmse_scores), np.mean(iou_scores)
+            ))
             tune.report(f1=np.mean(f1_scores), lr=lr, nrmse=np.mean(nrmse_scores), iou=np.mean(iou_scores))
 
 
