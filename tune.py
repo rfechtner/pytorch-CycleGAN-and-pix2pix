@@ -38,9 +38,7 @@ from ray.tune.schedulers import HyperBandForBOHB
 from ray.tune.suggest.bohb import TuneBOHB
 import ray
 
-import pandas as pd
-
-def train(config, checkpoint_dir=None):
+def train(config, checkpoint_dir=None, fixed_config=None):
     logger = CustomTBXLogger(
         config=config,
         logdir=tune.get_trial_dir()
@@ -48,8 +46,10 @@ def train(config, checkpoint_dir=None):
 
     logger.init()
 
-    opt_str = " ".join(["--{k} {v}".format(k=key, v=val) for key, val in config["train"].items()])
-    opt_str += " --name rt_{}_{}".format(config["other"]["name_prefix"], os.path.basename(tune.get_trial_dir()))
+    if fixed_config is not None:
+        config.update(fixed_config)
+    opt_str = " ".join(["--{k} {v}".format(k=key, v=val) for key, val in config.items()])
+    opt_str += " --name rt_{}_{}".format(fixed_config["other"]["name_prefix"], os.path.basename(str(tune.get_trial_dir())) )
 
     #if checkpoint_dir:
     #    print("Checkpoint should be loaded from " + checkpoint_dir)
@@ -117,7 +117,7 @@ def train(config, checkpoint_dir=None):
                         else:
                             torch.save(net.cpu().state_dict(), path)
 
-        if epoch % config['val']['metric_freq'] == 0:
+        if epoch % fixed_config['val']['metric_freq'] == 0:
             print('running validation at the end of epoch %d' % (epoch))
             for i, data in enumerate(val_dataset):
                 model.set_input(data)  # unpack data from data loader
@@ -141,7 +141,21 @@ def train(config, checkpoint_dir=None):
 if __name__ == '__main__':
     ray.init(dashboard_host='0.0.0.0')
 
-    config = {
+    tuneable_config = {
+        "ngf": tune.choice([16, 32, 64, 128]),
+        "ndf": tune.choice([16, 32, 64, 128]),
+        "netD": tune.choice(["basic", "n_layers", "pixel"]),
+        "netG": tune.choice(["resnet_9blocks", "resnet_6blocks", "unet_256", "unet_128"]),
+        "n_layers_D": tune.choice([0, 3, 5]),
+        "norm": tune.choice(["instance", "batch", "none"]),
+        "batch_size": tune.choice([1, 8, 16]),
+        "lr": tune.loguniform(1e-5, 1e-2),
+        "gan_mode": tune.choice(["vanilla", "lsgan", "wgangp"]),
+        "lr_policy": tune.choice(["linear", "step", "plateau", "cosine"]),
+        "lambda_L1": tune.lograndint(1, 1000)
+    }
+
+    fixed_config = {
             "other": {
                 "name_prefix": "BF2PSIVA"
             },
@@ -156,18 +170,8 @@ if __name__ == '__main__':
                 "save_epoch_freq": 25,
                 "pool_size": 2500,
                 "display_id": 0,
-                ### Tuneable
-                "ngf": tune.choice([16, 32, 64, 128]),
-                "ndf": tune.choice([16, 32, 64, 128]),
-                "netD": tune.choice(["basic", "n_layers", "pixel"]),
-                "netG": tune.choice(["resnet_9blocks", "resnet_6blocks", "unet_256", "unet_128"]),
-                "n_layers_D": tune.choice([0, 3, 5]),
-                "norm": tune.choice(["instance", "batch", "none"]),
-                "batch_size": tune.choice([1, 8, 16]),
-                "lr": tune.loguniform(1e-5, 1e-2),
-                "gan_mode": tune.choice(["vanilla", "lsgan", "wgangp"]),
-                "lr_policy": tune.choice(["linear", "step", "plateau", "cosine"]),
-                "lambda_L1": tune.lograndint(1, 1000)
+                "num_threads": 16,
+                "no_html": True
             },
             "val": {
                 "metric_freq": 5
@@ -190,13 +194,13 @@ if __name__ == '__main__':
     )
 
     analysis = tune.run(
-        train,
+        tune.with_parameters(train, fixed_config=fixed_config),
         name="bf_tune",
-        config=config,
+        config=tuneable_config,
         scheduler=bohb_hyperband,
         search_alg=bohb_search,
         #stop={"training_iteration": 150},
-        resources_per_trial={"cpu": 26, "gpu": 1},
+        resources_per_trial={"cpu": 32, "gpu": 1},
         local_dir="/project/ag-pp2/13_ron/masterthesis_workingdir/Trainings/pix2pix/ray_tune",
         verbose=2
     )
