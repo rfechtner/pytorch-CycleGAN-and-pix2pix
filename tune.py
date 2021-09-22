@@ -20,6 +20,7 @@ See frequently asked questions at: https://github.com/junyanz/pytorch-CycleGAN-a
 """
 import os.path
 import time
+import json
 from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
@@ -36,7 +37,9 @@ from ray.tune.schedulers import HyperBandForBOHB
 from ray.tune.suggest.bohb import TuneBOHB
 
 
-def train(config):
+def train(config, checkpoint_dir=None):
+    print(tune.get_trial_dir())
+
     logger = CustomTBXLogger(
         config=config,
         logdir=tune.get_trial_dir()
@@ -45,7 +48,11 @@ def train(config):
     logger.init()
 
     opt_str = " ".join(["--{k} {v}".format(k=key, v=val) for key, val in config["train"].items()])
-    opt_str += " --name rt_{}_{}".format(config["other"]["name_prefix"], os.path.basename(tune.get_trial_dir()))
+    opt_str += " --name rt_{}_{}".format(config["other"]["name_prefix"], tune.get_trial_dir())
+
+    if checkpoint_dir:
+        print("Checkpoint should be loaded from " + checkpoint_dir)
+        opt_str += " --continue_train"
 
     opt = TrainOptions().parse(opt_str=opt_str)
 
@@ -57,15 +64,17 @@ def train(config):
     val_dataset_size = len(val_dataset)
     print('The number of validation images = %d' % val_dataset_size)
 
-    model = create_model(opt)      # create a model given opt.model and other options
-    model.setup(opt)               # regular setup: load and print networks; create schedulers
+
+    model = create_model(opt)  # create a model given opt.model and other options
+    model.setup(opt)  # regular setup: load and print networks; create schedulers
+
     total_iters = 0                # the total number of training iterations
 
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
-        iter_data_time = time.time()    # timer for data loading per iteration
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
         model.update_learning_rate()    # update learning rates in the beginning of every epoch.
+
         for i, data in enumerate(dataset):  # inner loop within one epoch
             total_iters += opt.batch_size
             epoch_iter += opt.batch_size
@@ -74,8 +83,15 @@ def train(config):
 
         if epoch % opt.save_epoch_freq == 0:              # cache our model every <save_epoch_freq> epochs
             print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
-            model.save_networks('latest')
-            model.save_networks(epoch)
+            with tune.checkpoint_dir(step=epoch) as checkpoint_dir:
+                save_path = model.save_networks(epoch)
+            #model.save_networks(epoch)
+
+            with tune.checkpoint_dir(step=total_iters) as checkpoint_dir:
+                path = os.path.join(checkpoint_dir, "checkpoint")
+                with open(path, "w") as f:
+                    f.write(json.dumps({"timestep": total_iters}))
+
 
         if epoch % config['val']['metric_freq'] == 0:
             print('running validation at the end of epoch %d' % (epoch))
@@ -83,9 +99,6 @@ def train(config):
                 model.set_input(data)  # unpack data from data loader
                 model.test()  # run inference
                 visuals = model.get_current_visuals()  # get image results
-                img_path = model.get_image_paths()  # get image paths
-
-                print(img_path)
 
                 source = util.tensor2im(visuals['real_A'])
                 true = util.tensor2im(visuals['real_B'])
@@ -95,7 +108,6 @@ def train(config):
                 f1 = peak_based_f1(true, pred)
 
                 if i == 0:
-                    print("Logging image")
                     logger.log_figure("image", prediction2fig(source, true, pred, f1), step=epoch)
                 tune.report(f1=f1['f1'])
 
@@ -118,6 +130,7 @@ if __name__ == '__main__':
                 "n_epochs_decay": 50,
                 "save_epoch_freq": 25,
                 "pool_size": 5000,
+                "display_id": 0,
                 ### Tuneable
                 "ngf": tune.choice([16, 32, 64, 128]),
                 "ndf": tune.choice([16, 32, 64, 128]),
@@ -144,7 +157,7 @@ if __name__ == '__main__':
     )
 
     bohb_search = TuneBOHB(
-        max_concurrent=4
+        max_concurrent=1
     )
 
     analysis = tune.run(
