@@ -24,9 +24,7 @@ import json
 from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
-from util.visualizer import Visualizer
-from sklearn.utils import Bunch
-import shlex
+
 import torch
 from ray import tune
 from metrics import peak_based_f1
