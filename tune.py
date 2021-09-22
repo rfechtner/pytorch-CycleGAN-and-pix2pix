@@ -83,13 +83,14 @@ def tune(opt):
 
 
 if __name__ == '__main__':
-    opt = Bunch({
+    config = {
         "model": "pix2pix",
         "dataroot": "./../../Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
         "name": "test",
         "input_nc": 1,
         "output_nc": 1,
         "display_id": 0
-    })
+    }
+    opt = Bunch(**config)
 
     tune(opt)
