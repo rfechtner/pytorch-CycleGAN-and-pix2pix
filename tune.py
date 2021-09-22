@@ -27,6 +27,7 @@ from models import create_model
 from util.visualizer import Visualizer
 from sklearn.utils import Bunch
 import shlex
+import torch
 from ray import tune
 from metrics import peak_based_f1
 from util import util
@@ -48,9 +49,9 @@ def train(config, checkpoint_dir=None):
     opt_str = " ".join(["--{k} {v}".format(k=key, v=val) for key, val in config["train"].items()])
     opt_str += " --name rt_{}_{}".format(config["other"]["name_prefix"], os.path.basename(tune.get_trial_dir()))
 
-    if checkpoint_dir:
-        print("Checkpoint should be loaded from " + checkpoint_dir)
-        opt_str += " --continue_train"
+    #if checkpoint_dir:
+    #    print("Checkpoint should be loaded from " + checkpoint_dir)
+    #    opt_str += " --continue_train"
 
     opt = TrainOptions().parse(opt_str=opt_str)
 
@@ -62,9 +63,28 @@ def train(config, checkpoint_dir=None):
     val_dataset_size = len(val_dataset)
     print('The number of validation images = %d' % val_dataset_size)
 
-
     model = create_model(opt)  # create a model given opt.model and other options
     model.setup(opt)  # regular setup: load and print networks; create schedulers
+
+    # Override model loading
+    if checkpoint_dir:
+        for name in model.model_names:
+            if isinstance(name, str):
+                checkpoint = os.path.join(checkpoint_dir, "checkpoint_{}".format(name))
+                net = getattr(model, 'net' + name)
+                if isinstance(net, torch.nn.DataParallel):
+                    net = net.module
+                print('loading the model from %s' % checkpoint)
+                # if you are using PyTorch newer than 0.4 (e.g., built from
+                # GitHub source), you can remove str() on self.device
+                state_dict = torch.load(checkpoint, map_location=str(model.device))
+                if hasattr(state_dict, '_metadata'):
+                    del state_dict._metadata
+
+                # patch InstanceNorm checkpoints prior to 0.4
+                for key in list(state_dict.keys()):  # need to copy keys here because we mutate in loop
+                    model.__patch_instance_norm_state_dict(state_dict, net, key.split('.'))
+                net.load_state_dict(state_dict)
 
     total_iters = 0                # the total number of training iterations
 
@@ -82,14 +102,18 @@ def train(config, checkpoint_dir=None):
         if epoch % opt.save_epoch_freq == 0:              # cache our model every <save_epoch_freq> epochs
             print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
             with tune.checkpoint_dir(step=epoch) as checkpoint_dir:
-                save_path = model.save_networks(epoch)
-            #model.save_networks(epoch)
 
-            with tune.checkpoint_dir(step=total_iters) as checkpoint_dir:
-                path = os.path.join(checkpoint_dir, "checkpoint")
-                with open(path, "w") as f:
-                    f.write(json.dumps({"timestep": total_iters}))
+                for name in model.model_names:
+                    path = os.path.join(checkpoint_dir, "checkpoint_{}".format(name))
 
+                    if isinstance(name, str):
+                        net = getattr(model, 'net' + name)
+
+                        if len(model.gpu_ids) > 0 and torch.cuda.is_available():
+                            torch.save(net.module.cpu().state_dict(), path)
+                            net.cuda(model.gpu_ids[0])
+                        else:
+                            torch.save(net.cpu().state_dict(), path)
 
         if epoch % config['val']['metric_freq'] == 0:
             print('running validation at the end of epoch %d' % (epoch))
