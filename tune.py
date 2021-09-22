@@ -97,7 +97,7 @@ def train(config):
 
                 if i == 0:
                     print("Logging image")
-                    logger.log_figure("image", prediction2fig(source, true, pred, f1), step = epoch)
+                    logger.log_figure("image", prediction2fig(source, true, pred, None), step = epoch)
                 tune.report(f1=f1['f1'])
 
         print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
