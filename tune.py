@@ -78,9 +78,16 @@ def train(config, checkpoint_dir=None, fixed_config=None):
     model = create_model(opt)  # create a model given opt.model and other options
     model.setup(opt)  # regular setup: load and print networks; create schedulers
 
+    total_iters = 0  # the total number of training iterations
+
     # Override model loading
     if checkpoint_dir:
         print("Loading checkpoint from file: " + checkpoint_dir)
+        with open(os.path.join(checkpoint_dir, "checkpoint")) as f:
+            state = json.loads(f.read())
+            opt.epoch_count = state["step"]
+            total_iters += state["iter"]
+
         for name in model.model_names:
             if isinstance(name, str):
                 checkpoint = os.path.join(checkpoint_dir, "{}_checkpoint".format(name))
@@ -99,8 +106,6 @@ def train(config, checkpoint_dir=None, fixed_config=None):
                     model.__patch_instance_norm_state_dict(state_dict, net, key.split('.'))
                 net.load_state_dict(state_dict)
 
-    total_iters = 0                # the total number of training iterations
-
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
@@ -114,7 +119,16 @@ def train(config, checkpoint_dir=None, fixed_config=None):
 
         if epoch % fixed_config['val']['metric_freq'] == 0:
             print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
+
             with tune.checkpoint_dir(step=epoch) as checkpoint_dir:
+
+                path = os.path.join(checkpoint_dir, "checkpoint")
+                with open(path, "w") as f:
+                    f.write(json.dumps({
+                        "step": epoch,
+                        "iter": total_iters
+                    }))
+
                 for name in model.model_names:
                     path = os.path.join(checkpoint_dir, "{}_checkpoint".format(name))
 
