@@ -24,7 +24,7 @@ import json
 from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
-
+import numpy as np
 import torch
 from ray import tune
 from metrics import peak_based_f1
@@ -117,22 +117,23 @@ def train(config, checkpoint_dir=None, fixed_config=None):
             model.set_input(data)         # unpack data from dataset and apply preprocessing
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
+        print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
+
         if epoch % fixed_config['val']['metric_freq'] == 0:
-            print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
+            print(' > saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
 
             with tune.checkpoint_dir(step=epoch) as checkpoint_dir:
-
                 path = os.path.join(checkpoint_dir, "checkpoint")
-                print(" -> " + str(path))
+                print(" >> " + str(path))
                 with open(path, "w") as f:
                     f.write(json.dumps({
-                        "step": epoch + 1,
+                        "step": epoch,
                         "iter": total_iters
                     }))
 
                 for name in model.model_names:
                     path = os.path.join(checkpoint_dir, "{}_checkpoint".format(name))
-                    print(" -> " + str(path))
+                    print(" >> " + str(path))
 
                     if isinstance(name, str):
                         net = getattr(model, 'net' + name)
@@ -143,7 +144,12 @@ def train(config, checkpoint_dir=None, fixed_config=None):
                         else:
                             torch.save(net.cpu().state_dict(), path)
 
-            print('running validation at the end of epoch %d' % (epoch))
+            print(' > running validation at the end of epoch %d, iters %d' % (epoch, total_iters))
+
+            f1_scores = []
+            nrmse_scores = []
+            iou_scores = []
+
             for i, data in enumerate(val_dataset):
                 model.set_input(data)  # unpack data from data loader
                 model.test()  # run inference
@@ -155,19 +161,24 @@ def train(config, checkpoint_dir=None, fixed_config=None):
 
                 ### Calculate validation score
                 f1 = peak_based_f1(true, pred)
+                f1_scores.append(f1['f1'])
+
                 nrmse = normalized_root_mse(true, pred)
-                iou = jaccard_score((true.flatten() > 0), (pred.flatten() > 0))
+                nrmse_scores.append(nrmse)
+
+                iou = jaccard_score((true.flatten() > 0), (pred.flatten() > 0), zero_division=1.)
+                iou_scores.append(iou)
 
                 if i == 0:
-                    print("saving example image (f1 = {:.03f})".format(f1["f1"]))
+                    print(" > saving example image (f1 = {:.03f} %, nrmse = {:.03f}, iou = {:.03f} %)".format(
+                        f1["f1"], nrmse, iou
+                    ))
+
                     logger.log_figure("image", prediction2fig(source, true, pred, f1), step=epoch)
 
+            lr = model.schedulers[0].get_last_lr()
 
-                lr = model.schedulers[0].get_lr()
-
-                tune.report(f1=f1['f1'], lr=lr, nrmse=nrmse, iou=iou)
-
-        print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
+            tune.report(f1=np.mean(f1_scores), lr=lr, nrmse=np.mean(nrmse_scores), iou=np.mean(iou_scores))
 
 
 if __name__ == '__main__':
