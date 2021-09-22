@@ -29,7 +29,7 @@ from ray import tune
 from metrics import peak_based_f1
 
 
-def tune(config):
+def train(config):
 
     ### Get training options from config
     opt_str = """\
@@ -112,7 +112,7 @@ def tune(config):
 if __name__ == '__main__':
 
     analysis = tune.run(
-        tune,
+        train,
         config={
             "max_dataset_size": 10,
             "dataroot": "./../../Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
