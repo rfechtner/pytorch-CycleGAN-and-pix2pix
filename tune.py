@@ -62,7 +62,7 @@ def train(config, checkpoint_dir=None, fixed_config=None):
     name = str(tune.get_trial_dir())
 
     opt_str = " ".join(opt_strs)
-    opt_str += " --name rt_{}_{}".format(fixed_config["other"]["name_prefix"], name.split("/")[-1])
+    opt_str += " --name rt_{}_{}".format(fixed_config["other"]["name_prefix"], name)
 
     #if checkpoint_dir:
     #    print("Checkpoint should be loaded from " + checkpoint_dir)
@@ -213,7 +213,7 @@ if __name__ == '__main__':
         config=tuneable_config,
         scheduler=bohb_hyperband,
         search_alg=bohb_search,
-        num_samples=50,
+        num_samples=5,
         #stop={"training_iteration": 150},
         resources_per_trial={"cpu": 32, "gpu": 1},
         local_dir="/project/ag-pp2/13_ron/masterthesis_workingdir/Trainings/pix2pix/ray_tune",
