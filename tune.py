@@ -28,12 +28,12 @@ import shlex
 from ray import tune
 from metrics import peak_based_f1
 from util import util
-from logger import CustomLoggerCallback
+from logger import CustomTBXLogger
 
 
 
 def train(config):
-    logger = CustomLoggerCallback()
+    logger = CustomTBXLogger()
 
     logger.init(
         name=logger.trial_id,
