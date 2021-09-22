@@ -23,9 +23,10 @@ from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
+from sklearn.utils import Bunch
 
-if __name__ == '__main__':
-    opt = TrainOptions().parse()   # get training options
+
+def tune(opt):
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     dataset_size = len(dataset)    # get the number of images in the dataset.
     print('The number of training images = %d' % dataset_size)
@@ -79,3 +80,16 @@ if __name__ == '__main__':
             model.save_networks(epoch)
 
         print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
+
+
+if __name__ == '__main__':
+    opt = Bunch({
+        "model": "pix2pix",
+        "dataroot": "./../../Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
+        "name": "test",
+        "input_nc": 1,
+        "output_nc": 1,
+        "display_id": 0
+    })
+
+    tune(opt)
