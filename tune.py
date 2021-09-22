@@ -38,6 +38,8 @@ from ray.tune.schedulers import HyperBandForBOHB
 from ray.tune.suggest.bohb import TuneBOHB
 import ray
 
+import pandas as pd
+
 def train(config, checkpoint_dir=None):
     logger = CustomTBXLogger(
         config=config,
@@ -168,7 +170,7 @@ if __name__ == '__main__':
                 "lambda_L1": tune.lograndint(1, 1000)
             },
             "val": {
-                "metric_freq": 1
+                "metric_freq": 5
             }
     }
 
@@ -182,7 +184,7 @@ if __name__ == '__main__':
     )
 
     bohb_search = TuneBOHB(
-        max_concurrent=1,
+        max_concurrent=10,
         mode="max",
         metric="f1"
     )
@@ -199,5 +201,7 @@ if __name__ == '__main__':
         verbose=2
     )
 
-
     print("Best hyperparameters found were: ", analysis.best_config)
+
+    df = analysis.results_df
+    df.to_csv("/project/ag-pp2/13_ron/masterthesis_workingdir/Trainings/pix2pix/ray_tune/bf_tune/analysis.csv")
