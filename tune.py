@@ -27,7 +27,7 @@ from sklearn.utils import Bunch
 import shlex
 from ray import tune
 from metrics import peak_based_f1
-
+from util import util
 
 def train(config):
     opt_str = " ".join(["--{k} {v}".format(k=key, v=val) for key, val in config["train"].items()])
