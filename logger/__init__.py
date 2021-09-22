@@ -1,4 +1,25 @@
+
+import logging
+import numpy as np
+
+
+from typing import TYPE_CHECKING, Dict
+
+from ray.util.debug import log_once
+from ray.tune.result import (TRAINING_ITERATION, TIME_TOTAL_S, TIMESTEPS_TOTAL,
+                             EXPR_PARAM_FILE, EXPR_PARAM_PICKLE_FILE,
+                             EXPR_PROGRESS_FILE, EXPR_RESULT_FILE)
+from ray.tune.utils import flatten_dict
+
 from ray.tune.logger import Logger
+
+if TYPE_CHECKING:
+    from ray.tune.trial import Trial  # noqa: F401
+
+logger = logging.getLogger(__name__)
+
+tf = None
+VALID_SUMMARY_TYPES = [int, float, np.float32, np.float64, np.int32, np.int64]
 
 class CustomTBXLogger(Logger):
     """TensorBoardX Logger.
