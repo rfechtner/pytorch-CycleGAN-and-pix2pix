@@ -83,9 +83,6 @@ def train(config):
                 true = util.tensor2im(visuals['real_B'])
                 pred = util.tensor2im(visuals['fake_B'])
 
-                print(true.max())
-                print(pred.max())
-
                 ### Calculate validation score
                 f1 = peak_based_f1(true, pred)
 
@@ -104,12 +101,13 @@ if __name__ == '__main__':
                 "model": "pix2pix",
                 "max_dataset_size": 10,
                 "dataroot": "/project/ag-pp2/13_ron/masterthesis_workingdir/Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
-                "n_epochs": 5
+                "n_epochs": 5,
+                "n_epochs_decay": 5
             },
             "val": {
                 "metric_freq": 1
             }
         },
         resources_per_trial={"cpu": 16, "gpu": 1},
-        local_dir="/project/ag-pp2/13_ron/masterthesis_workingdir/Trainings/pix2pix"
+        local_dir="/project/ag-pp2/13_ron/masterthesis_workingdir/Trainings/pix2pix/ray_tune"
     )
