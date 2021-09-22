@@ -20,7 +20,7 @@ class BaseDataset(data.Dataset, ABC):
     -- <modify_commandline_options>:    (optionally) add dataset-specific options and set default options.
     """
 
-    def __init__(self, opt):
+    def __init__(self, opt, phase=None):
         """Initialize the class; save the options in the class
 
         Parameters:
