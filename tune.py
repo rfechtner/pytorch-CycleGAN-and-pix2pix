@@ -80,10 +80,13 @@ def train(config):
                 visuals = model.get_current_visuals()  # get image results
                 #img_path = model.get_image_paths()  # get image paths
 
-                ### Calculate validation score
-                f1 = peak_based_f1(visuals['real_B'].cpu().numpy(), visuals['fake_B'].cpu().numpy())
+                true = util.tensor2im(visuals['real_B'])
+                pred = util.tensor2im(visuals['fake_B'])
 
-                tune.report(f1=f1)
+                ### Calculate validation score
+                f1 = peak_based_f1(true, pred)
+
+                tune.report(f1=f1['f1'])
 
         print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
 
@@ -94,6 +97,7 @@ if __name__ == '__main__':
         train,
         config={
             "train": {
+                "name": "test",
                 "model": "pix2pix",
                 "max_dataset_size": 10,
                 "dataroot": "/project/ag-pp2/13_ron/masterthesis_workingdir/Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
@@ -102,4 +106,6 @@ if __name__ == '__main__':
                 "metric_freq": 1
             }
         },
-        resources_per_trial={"cpu": 16, "gpu": 1})
+        resources_per_trial={"cpu": 16, "gpu": 1},
+        local_dir="/project/ag-pp2/13_ron/masterthesis_workingdir/Trainings/pix2pix"
+    )
