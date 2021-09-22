@@ -36,7 +36,7 @@ from util.visualizer import prediction2fig
 
 from ray.tune.schedulers import HyperBandForBOHB
 from ray.tune.suggest.bohb import TuneBOHB
-
+import ray
 
 def train(config, checkpoint_dir=None):
     logger = CustomTBXLogger(
@@ -137,6 +137,7 @@ def train(config, checkpoint_dir=None):
 
 
 if __name__ == '__main__':
+    ray.init(webui_host="0.0.0.0")
 
     config = {
             "other": {
