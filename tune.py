@@ -126,7 +126,7 @@ def train(config, checkpoint_dir=None, fixed_config=None):
                 print(" -> " + str(path))
                 with open(path, "w") as f:
                     f.write(json.dumps({
-                        "step": epoch,
+                        "step": epoch + 1,
                         "iter": total_iters
                     }))
 
