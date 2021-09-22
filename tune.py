@@ -105,9 +105,6 @@ def train(config, checkpoint_dir=None, fixed_config=None):
                 if hasattr(state_dict, '_metadata'):
                     del state_dict._metadata
 
-                # patch InstanceNorm checkpoints prior to 0.4
-                for key in list(state_dict.keys()):  # need to copy keys here because we mutate in loop
-                    model.__patch_instance_norm_state_dict(state_dict, net, key.split('.'))
                 net.load_state_dict(state_dict)
 
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
@@ -161,8 +158,10 @@ def train(config, checkpoint_dir=None, fixed_config=None):
                 f1 = peak_based_f1(true, pred)
 
                 if i == 0:
+                    print("saving example image")
                     logger.log_figure("image", prediction2fig(source, true, pred, f1), step=epoch)
 
+                print(f1)
                 tune.report(f1=f1['f1'])
 
         print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
