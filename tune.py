@@ -115,7 +115,7 @@ if __name__ == '__main__':
         train,
         config={
             "max_dataset_size": 10,
-            "dataroot": "./../../Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
+            "dataroot": "/project/ag-pp2/13_ron/masterthesis_workingdir/Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
             "val_feq": 1,
             "max_val": 5
         },
