@@ -85,7 +85,7 @@ def tune(opt):
 
 if __name__ == '__main__':
     opt_str = '--model pix2pix --dataroot "./../../Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/" --name test --input_nc 1 --output_nc 1 --display_id 0'
-    opt = TrainOptions().parse(opt_str)
+    opt = TrainOptions().parse(opt_str=opt_str)
 
     print(opt)
     tune(opt)

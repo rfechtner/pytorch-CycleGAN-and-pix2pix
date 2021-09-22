@@ -69,7 +69,7 @@ class BaseOptions():
 
         # get the basic options
         if opt_str is not None:
-            opt, _ = parser.parse_known_args(opt_str)
+            opt, _ = parser.parse_known_args(shlex.split(opt_str))
         else:
             opt, _ = parser.parse_known_args()
 
@@ -79,7 +79,7 @@ class BaseOptions():
         parser = model_option_setter(parser, self.isTrain)
 
         if opt_str is not None:
-            opt, _ = parser.parse_known_args(opt_str)
+            opt, _ = parser.parse_known_args(shlex.split(opt_str))
         else:
             opt, _ = parser.parse_known_args()
 
