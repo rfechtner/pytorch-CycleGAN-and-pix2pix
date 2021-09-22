@@ -38,16 +38,6 @@ def train(config):
         logdir=tune.get_trial_dir()
     )
 
-    logger.init(
-        name=logger.trial_id,
-        id=logger.trial_id,
-        resume=logger.trial_id,
-        reinit=True,
-        allow_val_change=True
-    )
-
-    logger.set_log_path(tune.get_trial_dir())
-
     opt_str = " ".join(["--{k} {v}".format(k=key, v=val) for key, val in config["train"].items()])
     opt = TrainOptions().parse(opt_str=opt_str)
 
