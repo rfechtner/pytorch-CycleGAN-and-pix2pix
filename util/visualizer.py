@@ -250,22 +250,33 @@ def prediction2fig(source, true, pred, f1_scores=None):
     figure, axs = plt.subplots(1, 3)
 
     axs[0].imshow(source, cmap="gray")
+    axs[0].set_title("Input")
     axs[1].imshow(true, cmap="gray")
+    axs[1].set_title("Target")
     axs[2].imshow(pred, cmap="gray")
+    axs[2].set_title("Generated")
 
     if f1_scores is not None:
         axs[0].text(7, 14, 'F1 = {:.03f} %'.format(f1_scores["f1"]),
                     bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 10})
 
-        axs[1].scatter(f1_scores["TP_centers"][:, 0, 1], f1_scores["TP_centers"][:, 0, 0], s=100, facecolors='none',
-                       edgecolors='g', linewidths=3)
-        axs[1].scatter(f1_scores["FN_centers"][:, 1], f1_scores["FN_centers"][:, 0], s=100, facecolors='none',
-                       edgecolors='orange', linewidths=3)
+        if len(f1_scores["TP_centers"]) > 0:
+            axs[1].scatter(f1_scores["TP_centers"][:, 0, 1], f1_scores["TP_centers"][:, 0, 0], s=100, facecolors='none',
+                           edgecolors='g', linewidths=3)
 
-        axs[2].scatter(f1_scores["TP_centers"][:, 1, 1], f1_scores["TP_centers"][:, 1, 0], s=100, facecolors='none',
-                       edgecolors='g', linewidths=3)
-        axs[2].scatter(f1_scores["FP_centers"][:, 1], f1_scores["FP_centers"][:, 0], s=100, facecolors='none',
+            axs[2].scatter(f1_scores["TP_centers"][:, 1, 1], f1_scores["TP_centers"][:, 1, 0], s=100, facecolors='none',
+                           edgecolors='g', linewidths=3)
+
+        if len(f1_scores["FN_centers"]) > 0:
+            axs[1].scatter(f1_scores["FN_centers"][:, 1], f1_scores["FN_centers"][:, 0], s=100, facecolors='none',
+                           edgecolors='orange', linewidths=3)
+
+        if len(f1_scores["FP_centers"]) > 0:
+            axs[2].scatter(f1_scores["FP_centers"][:, 1], f1_scores["FP_centers"][:, 0], s=100, facecolors='none',
                        edgecolors='magenta', linewidths=3)
 
+    for ax in axs.flatten():
+        ax.tick_params(top=False, bottom=False, left=False, right=False,
+                       labelleft=False, labelbottom=False)
 
     return figure
