@@ -83,8 +83,9 @@ def tune(opt):
 
 
 if __name__ == '__main__':
-    args = TrainOptions().parse_args()
-    config = dict({key: TrainOptions().get_default(key) for key in vars(args)})
+    opt = TrainOptions().gather_options()
+
+    config = dict({key: TrainOptions().get_default(key) for key in vars(opt)})
     config.update({
             "model": "pix2pix",
             "dataroot": "./../../Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
