@@ -5,6 +5,9 @@ import ntpath
 import time
 from . import util, html
 from subprocess import Popen, PIPE
+import matplotlib.pyplot as plt
+from matplotlib import colors
+
 
 
 if sys.version_info[0] == 2:
@@ -219,3 +222,50 @@ class Visualizer():
         print(message)  # print the message
         with open(self.log_name, "a") as log_file:
             log_file.write('%s\n' % message)  # save the message
+
+
+def create_colormap(name, rgb_color, lower_bound=.001, lower_bound_offset=.2, N=256):
+    cols = ['red', 'green', 'blue', 'alpha']
+
+    color_dict = {
+        c:
+            (
+                (.0, .0, .0),
+                (lower_bound, (cval / 255) * lower_bound_offset, (cval / 255) * lower_bound_offset),
+                (1., cval / 255, cval / 255)
+            )
+            if lower_bound is not None else
+            (
+                (.0, .0, .0),
+                (1., cval / 255, cval / 255)
+            )
+        for cval, c in zip(rgb_color, cols)
+    }
+    print(color_dict)
+    cmap = colors.LinearSegmentedColormap(name, color_dict, N)
+
+    return cmap
+
+def prediction2fig(source, true, pred, f1_scores=None):
+    figure, axs = plt.subplots(1, 3)
+
+    axs[0].imshow(source, cmap="gray")
+    axs[1].imshow(true, cmap="gray")
+    axs[2].imshow(pred, cmap="gray")
+
+    if f1_scores is not None:
+        axs[0].text(7, 14, 'F1 = {:.03f} %'.format(f1_scores["f1"]),
+                    bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 10})
+
+        axs[1].scatter(f1_scores["TP_centers"][:, 0, 1], f1_scores["TP_centers"][:, 0, 0], s=100, facecolors='none',
+                       edgecolors='g', linewidths=3)
+        axs[1].scatter(f1_scores["FN_centers"][:, 1], f1_scores["FN_centers"][:, 0], s=100, facecolors='none',
+                       edgecolors='orange', linewidths=3)
+
+        axs[2].scatter(f1_scores["TP_centers"][:, 1, 1], f1_scores["TP_centers"][:, 1, 0], s=100, facecolors='none',
+                       edgecolors='g', linewidths=3)
+        axs[2].scatter(f1_scores["FP_centers"][:, 1], f1_scores["FP_centers"][:, 0], s=100, facecolors='none',
+                       edgecolors='magenta', linewidths=3)
+
+
+    return figure

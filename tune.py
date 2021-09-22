@@ -28,8 +28,23 @@ import shlex
 from ray import tune
 from metrics import peak_based_f1
 from util import util
+from logger import CustomLoggerCallback
+
+
 
 def train(config):
+    logger = CustomLoggerCallback()
+
+    logger.init(
+        name=logger.trial_id,
+        id=logger.trial_id,
+        resume=logger.trial_id,
+        reinit=True,
+        allow_val_change=True
+    )
+
+    logger.set_log_path(tune.get_trial_dir())
+
     opt_str = " ".join(["--{k} {v}".format(k=key, v=val) for key, val in config["train"].items()])
     opt = TrainOptions().parse(opt_str=opt_str)
 
@@ -80,12 +95,16 @@ def train(config):
                 visuals = model.get_current_visuals()  # get image results
                 #img_path = model.get_image_paths()  # get image paths
 
+                source = util.tensor2im(visuals['real_A'])
                 true = util.tensor2im(visuals['real_B'])
                 pred = util.tensor2im(visuals['fake_B'])
 
                 ### Calculate validation score
                 f1 = peak_based_f1(true, pred)
 
+                if i == 0:
+                    print("Logging image")
+                    logger.log_figure("image", prediction2fig(source, true, pred, f1), step = epoch)
                 tune.report(f1=f1['f1'])
 
         print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
