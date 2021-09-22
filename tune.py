@@ -104,6 +104,7 @@ if __name__ == '__main__':
                 "model": "pix2pix",
                 "max_dataset_size": 10,
                 "dataroot": "/project/ag-pp2/13_ron/masterthesis_workingdir/Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
+                "n_epochs": 5
             },
             "val": {
                 "metric_freq": 1
