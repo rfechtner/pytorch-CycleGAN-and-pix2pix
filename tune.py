@@ -113,6 +113,20 @@ def train(config, checkpoint_dir=None, fixed_config=None):
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
         if epoch % fixed_config['val']['metric_freq'] == 0:
+            print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
+            with tune.checkpoint_dir(step=epoch) as checkpoint_dir:
+                for name in model.model_names:
+                    path = os.path.join(checkpoint_dir, "{}_checkpoint".format(name))
+
+                    if isinstance(name, str):
+                        net = getattr(model, 'net' + name)
+
+                        if len(model.gpu_ids) > 0 and torch.cuda.is_available():
+                            torch.save(net.module.cpu().state_dict(), path)
+                            net.cuda(model.gpu_ids[0])
+                        else:
+                            torch.save(net.cpu().state_dict(), path)
+
             print('running validation at the end of epoch %d' % (epoch))
             for i, data in enumerate(val_dataset):
                 model.set_input(data)  # unpack data from data loader
@@ -128,21 +142,8 @@ def train(config, checkpoint_dir=None, fixed_config=None):
 
                 if i == 0:
                     logger.log_figure("image", prediction2fig(source, true, pred, f1), step=epoch)
+
                 tune.report(f1=f1['f1'])
-
-            print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
-            with tune.checkpoint_dir(step=epoch) as checkpoint_dir:
-                for name in model.model_names:
-                    path = os.path.join(checkpoint_dir, "{}_checkpoint".format(name))
-
-                    if isinstance(name, str):
-                        net = getattr(model, 'net' + name)
-
-                        if len(model.gpu_ids) > 0 and torch.cuda.is_available():
-                            torch.save(net.module.cpu().state_dict(), path)
-                            net.cuda(model.gpu_ids[0])
-                        else:
-                            torch.save(net.cpu().state_dict(), path)
 
         print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
 
@@ -157,7 +158,7 @@ if __name__ == '__main__':
         "netG": tune.choice(["resnet_9blocks", "resnet_6blocks", "unet_256", "unet_128"]),
         "n_layers_D": tune.choice([0, 3, 5]),
         "norm": tune.choice(["instance", "batch", "none"]),
-        "batch_size": tune.choice([1, 8, 16]),
+        "batch_size": tune.choice([1, 4, 8]),
         "lr": tune.loguniform(1e-5, 1e-2),
         "gan_mode": tune.choice(["vanilla", "lsgan", "wgangp"]),
         "lr_policy": tune.choice(["linear", "step", "plateau", "cosine"]),
