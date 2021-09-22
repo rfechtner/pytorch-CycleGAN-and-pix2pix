@@ -163,7 +163,7 @@ def train(config, checkpoint_dir=None, fixed_config=None):
                 f1 = peak_based_f1(true, pred)
                 f1_scores.append(f1['f1'])
 
-                nrmse = normalized_root_mse(true, pred)
+                nrmse = normalized_root_mse(true, pred, normalization="mean") if true.mean() > 0 else 1
                 nrmse_scores.append(nrmse)
 
                 iou = jaccard_score((true.flatten() > 0), (pred.flatten() > 0), zero_division=1.)
@@ -181,7 +181,7 @@ def train(config, checkpoint_dir=None, fixed_config=None):
             print(" > val performance: f1 = {:.03f} %, nrmse = {:.03f}, iou = {:.03f} %".format(
                 np.mean(f1_scores), np.mean(nrmse_scores), np.mean(iou_scores)
             ))
-            tune.report(f1=np.mean(f1_scores), lr=lr, nrmse=np.mean(nrmse_scores), iou=np.mean(iou_scores))
+            tune.report(scores_f1=np.mean(f1_scores), lr=lr, scores_nrmse=np.mean(nrmse_scores), scores_iou=np.mean(iou_scores))
 
 
 if __name__ == '__main__':
@@ -214,7 +214,7 @@ if __name__ == '__main__':
                 "n_epochs": 100,
                 "n_epochs_decay": 50,
                 "save_epoch_freq": 25,
-                "pool_size": 2500,
+                "pool_size": 1000,
                 "display_id": 0,
                 "num_threads": 16,
                 "no_html": True,
@@ -241,8 +241,8 @@ if __name__ == '__main__':
         config=tuneable_config,
         scheduler=bohb_hyperband,
         search_alg=bohb_search,
-        num_samples=2,
-        metric="f1",
+        num_samples=25,
+        metric="scores_f1",
         mode="max",
         #stop={"training_iteration": 150},
         resources_per_trial={"cpu": 32, "gpu": 1},
