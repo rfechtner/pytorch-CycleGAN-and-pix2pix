@@ -119,4 +119,4 @@ if __name__ == '__main__':
             "val_feq": 1,
             "max_val": 5
         },
-        resources_per_trial={"gpu": 1})
+        resources_per_trial={"cpu": 16, "gpu": 1})
