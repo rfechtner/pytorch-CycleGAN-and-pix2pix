@@ -38,6 +38,9 @@ from ray.tune.schedulers import HyperBandForBOHB
 from ray.tune.suggest.bohb import TuneBOHB
 import ray
 
+from skimage.metrics import normalized_root_mse
+from sklearn.metrics import jaccard_score
+
 def train(config, checkpoint_dir=None, fixed_config=None):
     logger = CustomTBXLogger(
         config=config,
@@ -154,13 +157,17 @@ def train(config, checkpoint_dir=None, fixed_config=None):
 
                 ### Calculate validation score
                 f1 = peak_based_f1(true, pred)
+                nrmse = normalized_root_mse(true, pred)
+                iou = jaccard_score((true.flatten() > 0), (pred.flatten() > 0))
 
                 if i == 0:
-                    print("saving example image")
+                    print("saving example image (f1 = {:.03f})".format(f1["f1"]))
                     logger.log_figure("image", prediction2fig(source, true, pred, f1), step=epoch)
 
-                print(f1)
-                tune.report(f1=f1['f1'])
+
+                lr = model.schedulers[0].get_lr()
+
+                tune.report(f1=f1['f1'], lr=lr, nrmse=nrmse, iou=iou)
 
         print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
 
@@ -176,7 +183,7 @@ if __name__ == '__main__':
         "n_layers_D": tune.choice([0, 3, 5]),
         "norm": tune.choice(["instance", "batch", "none"]),
         "batch_size": tune.choice([1, 4, 8]),
-        "lr": tune.loguniform(1e-5, 1e-2),
+        "lr": tune.loguniform(1e-4, 1e-2),
         "gan_mode": tune.choice(["vanilla", "lsgan", "wgangp"]),
         "lr_policy": tune.choice(["linear", "step", "plateau", "cosine"]),
         "lambda_L1": tune.lograndint(1, 1000)
