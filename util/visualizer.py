@@ -248,7 +248,7 @@ def create_colormap(name, rgb_color, lower_bound=.001, lower_bound_offset=.2, N=
 
 
 def prediction2fig(source, true, pred, f1_scores=None):
-    figure, axs = plt.subplots(1, 3, figsize=(15, 20))
+    figure, axs = plt.subplots(1, 3, figsize=(15, 5))
 
     axs[0].imshow(source, cmap="gray")
     axs[0].set_title("Input")
@@ -258,8 +258,9 @@ def prediction2fig(source, true, pred, f1_scores=None):
     axs[2].set_title("Generated")
 
     if f1_scores is not None:
-        axs[0].text(7, 14, 'F1 = {:.03f} %'.format(f1_scores["f1"]),
-                    bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 10})
+        axs[0].text(7, 14, 'precision = {:.03f} % \n recall = {:.03f} % \n F1 = {:.03f} %'.format(
+            f1_scores["precision"], f1_scores["recall"], f1_scores["f1"]
+        ), bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 10})
 
         if len(f1_scores["TP_centers"]) > 0:
             axs[0].scatter(f1_scores["TP_centers"][:, 0, 1], f1_scores["TP_centers"][:, 0, 0], s=100,

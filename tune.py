@@ -41,6 +41,7 @@ def train(config):
     logger.init()
 
     opt_str = " ".join(["--{k} {v}".format(k=key, v=val) for key, val in config["train"].items()])
+
     opt = TrainOptions().parse(opt_str=opt_str)
 
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
@@ -118,7 +119,8 @@ if __name__ == '__main__':
                 "max_dataset_size": 10,
                 "dataroot": "/project/ag-pp2/13_ron/masterthesis_workingdir/Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
                 "n_epochs": 5,
-                "n_epochs_decay": 5
+                "n_epochs_decay": 5,
+                "lr": tune.choice([0.0002, 0.0001])
             },
             "val": {
                 "metric_freq": 1
