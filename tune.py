@@ -174,13 +174,17 @@ if __name__ == '__main__':
 
     bohb_hyperband = HyperBandForBOHB(
         time_attr="training_iteration",
-        max_t=100,
+        max_t=5000,
+        mode="max",
+        metric="f1",
         reduction_factor=4,
         stop_last_trials=False
     )
 
     bohb_search = TuneBOHB(
-        max_concurrent=1
+        max_concurrent=1,
+        mode="max",
+        metric="f1"
     )
 
     analysis = tune.run(
