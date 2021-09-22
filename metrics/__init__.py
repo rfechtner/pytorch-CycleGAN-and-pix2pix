@@ -3,7 +3,7 @@ import numpy as np
 from scipy import ndimage as ndi
 
 from sklearn.cluster import DBSCAN
-from skimage.feature import peak_local_max
+from skimage.feature import peak_local_max, match_descriptors
 from skimage.segmentation import watershed
 import skimage.measure as skmeas
 
