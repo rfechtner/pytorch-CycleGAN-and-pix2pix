@@ -82,7 +82,7 @@ def train(config, checkpoint_dir=None, fixed_config=None):
 
     # Override model loading
     if checkpoint_dir:
-        print("Loading checkpoint from file: " + checkpoint_dir)
+        print("loading checkpoint from file: " + checkpoint_dir)
         path = os.path.join(checkpoint_dir, "checkpoint")
         print(" -> " + str(path))
         with open(path) as f:
