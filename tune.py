@@ -30,7 +30,7 @@ from metrics import peak_based_f1
 
 
 def train(config):
-    opt_str = " ".join(["--{k} {v}".format(k=key, v=val) for key, val in config.items()])
+    opt_str = " ".join(["--{k} {v}".format(k=key, v=val) for key, val in config["train"].items()])
     opt = TrainOptions().parse(opt_str=opt_str)
 
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
@@ -72,11 +72,9 @@ def train(config):
             model.save_networks('latest')
             model.save_networks(epoch)
 
-        if epoch % config['val_freq'] == 0:
+        if epoch % config['val']['metric_freq'] == 0:
             print('running validation at the end of epoch %d' % (epoch))
             for i, data in enumerate(val_dataset):
-                if i >= config['max_val']:  # only apply our model to opt.num_test images.
-                    break
                 model.set_input(data)  # unpack data from data loader
                 model.test()  # run inference
                 visuals = model.get_current_visuals()  # get image results
@@ -95,9 +93,12 @@ if __name__ == '__main__':
     analysis = tune.run(
         train,
         config={
-            "max_dataset_size": 10,
-            "dataroot": "/project/ag-pp2/13_ron/masterthesis_workingdir/Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
-            "val_feq": 1,
-            "max_val": 5
+            "train": {
+                "max_dataset_size": 10,
+                "dataroot": "/project/ag-pp2/13_ron/masterthesis_workingdir/Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
+            },
+            "val": {
+                "metric_freq": 1
+            }
         },
         resources_per_trial={"cpu": 16, "gpu": 1})
