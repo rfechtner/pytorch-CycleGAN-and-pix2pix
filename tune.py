@@ -58,8 +58,11 @@ def train(config, checkpoint_dir=None, fixed_config=None):
             if val:
                 opt_strs.append("--{k}".format(k=key))
 
+
+    name = str(tune.get_trial_dir())
+    print(name)
     opt_str = " ".join(opt_strs)
-    opt_str += " --name rt_{}_{}".format(fixed_config["other"]["name_prefix"], os.path.basename(str(tune.get_trial_dir())))
+    opt_str += " --name rt_{}_{}".format(fixed_config["other"]["name_prefix"], name)
 
     #if checkpoint_dir:
     #    print("Checkpoint should be loaded from " + checkpoint_dir)
