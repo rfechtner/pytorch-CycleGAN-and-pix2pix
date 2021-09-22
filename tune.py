@@ -38,8 +38,6 @@ from ray.tune.suggest.bohb import TuneBOHB
 
 
 def train(config, checkpoint_dir=None):
-    print(tune.get_trial_dir())
-
     logger = CustomTBXLogger(
         config=config,
         logdir=tune.get_trial_dir()
@@ -48,7 +46,7 @@ def train(config, checkpoint_dir=None):
     logger.init()
 
     opt_str = " ".join(["--{k} {v}".format(k=key, v=val) for key, val in config["train"].items()])
-    opt_str += " --name rt_{}_{}".format(config["other"]["name_prefix"], tune.get_trial_dir())
+    opt_str += " --name rt_{}_{}".format(config["other"]["name_prefix"], os.path.basename(tune.get_trial_dir()))
 
     if checkpoint_dir:
         print("Checkpoint should be loaded from " + checkpoint_dir)
@@ -129,14 +127,14 @@ if __name__ == '__main__':
                 "n_epochs": 100,
                 "n_epochs_decay": 50,
                 "save_epoch_freq": 25,
-                "pool_size": 5000,
+                "pool_size": 2500,
                 "display_id": 0,
                 ### Tuneable
                 "ngf": tune.choice([16, 32, 64, 128]),
                 "ndf": tune.choice([16, 32, 64, 128]),
                 "netD": tune.choice(["basic", "n_layers", "pixel"]),
                 "netG": tune.choice(["resnet_9blocks", "resnet_6blocks", "unet_256", "unet_128"]),
-                "n_layers_D": tune.choice([0, 3, 8]),
+                "n_layers_D": tune.choice([0, 3, 5]),
                 "norm": tune.choice(["instance", "batch", "none"]),
                 "batch_size": tune.choice([1, 8, 16]),
                 "lr": tune.loguniform(1e-5, 1e-2),
