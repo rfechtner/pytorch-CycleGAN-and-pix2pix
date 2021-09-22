@@ -47,7 +47,9 @@ def train(config, checkpoint_dir=None, fixed_config=None):
     logger.init()
 
     if fixed_config is not None:
-        config.update(fixed_config)
+        config.update(fixed_config["train"])
+        print(config)
+
     opt_str = " ".join(["--{k} {v}".format(k=key, v=val) for key, val in config.items()])
     opt_str += " --name rt_{}_{}".format(fixed_config["other"]["name_prefix"], os.path.basename(str(tune.get_trial_dir())) )
 
