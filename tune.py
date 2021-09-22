@@ -118,4 +118,5 @@ if __name__ == '__main__':
             "dataroot": "./../../Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
             "val_feq": 1,
             "max_val": 5
-        })
+        },
+        resources_per_trial={"gpu": 1})
