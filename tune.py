@@ -83,7 +83,9 @@ def train(config, checkpoint_dir=None, fixed_config=None):
     # Override model loading
     if checkpoint_dir:
         print("Loading checkpoint from file: " + checkpoint_dir)
-        with open(os.path.join(checkpoint_dir, "checkpoint")) as f:
+        path = os.path.join(checkpoint_dir, "checkpoint")
+        print(" -> " + str(path))
+        with open(path) as f:
             state = json.loads(f.read())
             opt.epoch_count = state["step"]
             total_iters += state["iter"]
@@ -91,6 +93,8 @@ def train(config, checkpoint_dir=None, fixed_config=None):
         for name in model.model_names:
             if isinstance(name, str):
                 checkpoint = os.path.join(checkpoint_dir, "{}_checkpoint".format(name))
+                print(" -> " + str(checkpoint))
+
                 net = getattr(model, 'net' + name)
                 if isinstance(net, torch.nn.DataParallel):
                     net = net.module
@@ -123,6 +127,7 @@ def train(config, checkpoint_dir=None, fixed_config=None):
             with tune.checkpoint_dir(step=epoch) as checkpoint_dir:
 
                 path = os.path.join(checkpoint_dir, "checkpoint")
+                print(" -> " + str(path))
                 with open(path, "w") as f:
                     f.write(json.dumps({
                         "step": epoch,
@@ -131,6 +136,7 @@ def train(config, checkpoint_dir=None, fixed_config=None):
 
                 for name in model.model_names:
                     path = os.path.join(checkpoint_dir, "{}_checkpoint".format(name))
+                    print(" -> " + str(path))
 
                     if isinstance(name, str):
                         net = getattr(model, 'net' + name)
