@@ -50,8 +50,16 @@ def train(config, checkpoint_dir=None, fixed_config=None):
         config.update(fixed_config["train"])
         print(config)
 
-    opt_str = " ".join(["--{k} {v}".format(k=key, v=val) for key, val in config.items()])
-    opt_str += " --name rt_{}_{}".format(fixed_config["other"]["name_prefix"], os.path.basename(str(tune.get_trial_dir())) )
+    opt_strs = []
+    for key, val in config.items():
+        if not isinstance(val, bool):
+            opt_strs.append("--{k} {v}".format(k=key, v=val))
+        else:
+            if val:
+                opt_strs.append("--{k}".format(k=key))
+
+    opt_str = " ".join(opt_strs)
+    opt_str += " --name rt_{}_{}".format(fixed_config["other"]["name_prefix"], os.path.basename(str(tune.get_trial_dir())))
 
     #if checkpoint_dir:
     #    print("Checkpoint should be loaded from " + checkpoint_dir)
