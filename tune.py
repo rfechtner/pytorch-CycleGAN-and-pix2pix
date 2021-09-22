@@ -123,7 +123,7 @@ if __name__ == '__main__':
                 "ndf": tune.choice([16, 32, 64, 128]),
                 "netD": tune.choice(["basic", "n_layers", "pixel"]),
                 "netG": tune.choice(["resnet_9blocks", "resnet_6blocks", "unet_256", "unet_128"]),
-                "n_layers_D": tune.sample_from(lambda spec: [0, 3, 8] if spec.config.train.netD == "n_layers" else [3]),
+                "n_layers_D": tune.choice([0, 3, 8]),
                 "norm": tune.choice(["instance", "batch", "none"]),
                 "batch_size": tune.choice([1, 8, 16]),
                 "lr": tune.loguniform(1e-5, 1e-2),
