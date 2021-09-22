@@ -247,7 +247,7 @@ def create_colormap(name, rgb_color, lower_bound=.001, lower_bound_offset=.2, N=
     return cmap
 
 def prediction2fig(source, true, pred, f1_scores=None):
-    figure, axs = plt.subplots(1, 3)
+    figure, axs = plt.subplots(1, 3, figsize=(5, 8))
 
     axs[0].imshow(source, cmap="gray")
     axs[0].set_title("Input")
@@ -261,22 +261,32 @@ def prediction2fig(source, true, pred, f1_scores=None):
                     bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 10})
 
         if len(f1_scores["TP_centers"]) > 0:
+            axs[0].scatter(f1_scores["TP_centers"][:, 0, 1], f1_scores["TP_centers"][:, 0, 0], s=100, facecolors='none',
+                           edgecolors='g', linewidths=2, marker="x")
+
             axs[1].scatter(f1_scores["TP_centers"][:, 0, 1], f1_scores["TP_centers"][:, 0, 0], s=100, facecolors='none',
-                           edgecolors='g', linewidths=3)
+                           edgecolors='g', linewidths=2)
 
             axs[2].scatter(f1_scores["TP_centers"][:, 1, 1], f1_scores["TP_centers"][:, 1, 0], s=100, facecolors='none',
-                           edgecolors='g', linewidths=3)
+                           edgecolors='g', linewidths=2)
 
         if len(f1_scores["FN_centers"]) > 0:
+            axs[0].scatter(f1_scores["FN_centers"][:, 1], f1_scores["FN_centers"][:, 0], s=100, facecolors='none',
+                           edgecolors='orange', linewidths=2, marker="x")
+
             axs[1].scatter(f1_scores["FN_centers"][:, 1], f1_scores["FN_centers"][:, 0], s=100, facecolors='none',
-                           edgecolors='orange', linewidths=3)
+                           edgecolors='orange', linewidths=2)
 
         if len(f1_scores["FP_centers"]) > 0:
+            axs[0].scatter(f1_scores["FP_centers"][:, 1], f1_scores["FP_centers"][:, 0], s=100, facecolors='none',
+                           edgecolors='magenta', linewidths=2, marker="x")
+
             axs[2].scatter(f1_scores["FP_centers"][:, 1], f1_scores["FP_centers"][:, 0], s=100, facecolors='none',
-                       edgecolors='magenta', linewidths=3)
+                       edgecolors='magenta', linewidths=2)
 
     for ax in axs.flatten():
         ax.tick_params(top=False, bottom=False, left=False, right=False,
                        labelleft=False, labelbottom=False)
 
+    plt.tight_layout()
     return figure

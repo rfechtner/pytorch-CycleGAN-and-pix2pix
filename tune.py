@@ -113,6 +113,8 @@ if __name__ == '__main__':
             "train": {
                 "name": "test",
                 "model": "pix2pix",
+                "input_nc": 1,
+                "output_nc": 1,
                 "max_dataset_size": 10,
                 "dataroot": "/project/ag-pp2/13_ron/masterthesis_workingdir/Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
                 "n_epochs": 5,
