@@ -83,6 +83,9 @@ def train(config):
                 true = util.tensor2im(visuals['real_B'])
                 pred = util.tensor2im(visuals['fake_B'])
 
+                print(true.max())
+                print(pred.max())
+
                 ### Calculate validation score
                 f1 = peak_based_f1(true, pred)
 
