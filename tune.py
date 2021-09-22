@@ -89,7 +89,9 @@ def train(config):
                 model.set_input(data)  # unpack data from data loader
                 model.test()  # run inference
                 visuals = model.get_current_visuals()  # get image results
-                #img_path = model.get_image_paths()  # get image paths
+                img_path = model.get_image_paths()  # get image paths
+
+                print(img_path)
 
                 source = util.tensor2im(visuals['real_A'])
                 true = util.tensor2im(visuals['real_B'])
