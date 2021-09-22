@@ -174,7 +174,7 @@ def train(config, checkpoint_dir=None, fixed_config=None):
                         f1["f1"], nrmse, iou
                     ))
 
-                    logger.log_figure("image", prediction2fig(source, true, pred, f1), step=epoch)
+                    logger.log_figure("image", prediction2fig(source, true, pred, f1, nrmse, iou), step=epoch)
 
             lr = model.schedulers[0].get_last_lr()
 
