@@ -81,7 +81,7 @@ def train(config):
                 #img_path = model.get_image_paths()  # get image paths
 
                 ### Calculate validation score
-                f1 = peak_based_f1(visuals['real_B'], visuals['fake_B'])
+                f1 = peak_based_f1(visuals['real_B'].cpu(), visuals['fake_B'].cpu())
 
                 tune.report(f1=f1)
 
