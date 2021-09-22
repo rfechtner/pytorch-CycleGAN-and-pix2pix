@@ -83,7 +83,7 @@ def tune(opt):
 
 
 if __name__ == '__main__':
-
+    args = TrainOptions().parse_args()
     config = dict({key: TrainOptions().get_default(key) for key in vars(args)})
     config.update({
             "model": "pix2pix",
