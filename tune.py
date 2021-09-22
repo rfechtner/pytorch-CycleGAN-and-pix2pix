@@ -18,6 +18,7 @@ See options/base_options.py and options/train_options.py for more training optio
 See training and test tips at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/tips.md
 See frequently asked questions at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/qa.md
 """
+import os.path
 import time
 from options.train_options import TrainOptions
 from data import create_dataset
@@ -31,6 +32,9 @@ from util import util
 from logger import CustomTBXLogger
 from util.visualizer import prediction2fig
 
+from ray.tune.schedulers import HyperBandForBOHB
+from ray.tune.suggest.bohb import TuneBOHB
+
 
 def train(config):
     logger = CustomTBXLogger(
@@ -41,6 +45,7 @@ def train(config):
     logger.init()
 
     opt_str = " ".join(["--{k} {v}".format(k=key, v=val) for key, val in config["train"].items()])
+    opt_str += " --name rt_{}_{}".format(config["other"]["name_prefix"], os.path.basename(tune.get_trial_dir()))
 
     opt = TrainOptions().parse(opt_str=opt_str)
 
@@ -62,21 +67,10 @@ def train(config):
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
         model.update_learning_rate()    # update learning rates in the beginning of every epoch.
         for i, data in enumerate(dataset):  # inner loop within one epoch
-            iter_start_time = time.time()  # timer for computation per iteration
-            if total_iters % opt.print_freq == 0:
-                t_data = iter_start_time - iter_data_time
-
             total_iters += opt.batch_size
             epoch_iter += opt.batch_size
             model.set_input(data)         # unpack data from dataset and apply preprocessing
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
-
-            if total_iters % opt.save_latest_freq == 0:   # cache our latest model every <save_latest_freq> iterations
-                print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
-                save_suffix = 'iter_%d' % total_iters if opt.save_by_iter else 'latest'
-                model.save_networks(save_suffix)
-
-            iter_data_time = time.time()
 
         if epoch % opt.save_epoch_freq == 0:              # cache our model every <save_epoch_freq> epochs
             print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
@@ -110,24 +104,62 @@ def train(config):
 
 if __name__ == '__main__':
 
-    analysis = tune.run(
-        train,
-        config={
+    config = {
+            "other": {
+                "name_prefix": "BF2PSIVA"
+            },
             "train": {
-                "name": "test",
                 "model": "pix2pix",
                 "input_nc": 1,
                 "output_nc": 1,
-                "max_dataset_size": 10,
+                "max_dataset_size": 500,
                 "dataroot": "/project/ag-pp2/13_ron/masterthesis_workingdir/Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
-                "n_epochs": 5,
-                "n_epochs_decay": 5,
-                "lr": tune.choice([0.0002, 0.0001])
+                "n_epochs": 100,
+                "n_epochs_decay": 50,
+                "save_epoch_freq": 25,
+                "pool_size": 5000,
+                ### Tuneable
+                "ngf": tune.choice([16, 32, 64, 128]),
+                "ndf": tune.choice([16, 32, 64, 128]),
+                "netD": tune.choice(["basic", "n_layers", "pixel"]),
+                "netG": tune.choice(["resnet_9blocks", "resnet_6blocks", "unet_256", "unet_128"]),
+                "n_layers_D": tune.sample_from(lambda spec: [0, 3, 8] if spec.config.train.netD == "n_layers" else [3]),
+                "norm": tune.choice(["instance", "batch", "none"]),
+                "batch_size": tune.choice([1, 8, 16]),
+                "lr": tune.loguniform(1e-5, 1e-2),
+                "gan_mode": tune.choice(["vanilla", "lsgan", "wgangp"]),
+                "lr_policy": tune.choice(["linear", "step", "plateau", "cosine"]),
+                "lambda_L1": tune.lograndint(1, 1000)
             },
             "val": {
                 "metric_freq": 1
             }
-        },
-        resources_per_trial={"cpu": 16, "gpu": 1},
-        local_dir="/project/ag-pp2/13_ron/masterthesis_workingdir/Trainings/pix2pix/ray_tune"
+    }
+
+    bohb_hyperband = HyperBandForBOHB(
+        time_attr="training_iteration",
+        max_t=100,
+        reduction_factor=4,
+        stop_last_trials=False
     )
+
+    bohb_search = TuneBOHB(
+        max_concurrent=4
+    )
+
+    analysis = tune.run(
+        train,
+        name="bf_tune",
+        config=config,
+        scheduler=bohb_hyperband,
+        search_alg=bohb_search,
+        metric="f1",
+        mode="max",
+        stop={"training_iteration": 150},
+        resources_per_trial={"cpu": 16, "gpu": 1},
+        local_dir="/project/ag-pp2/13_ron/masterthesis_workingdir/Trainings/pix2pix/ray_tune",
+        verbose=2
+    )
+
+
+    print("Best hyperparameters found were: ", analysis.best_config)
