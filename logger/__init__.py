@@ -31,7 +31,7 @@ class CustomTBXLogger(Logger):
     VALID_HPARAMS = (str, bool, np.bool8, int, np.integer, float, list,
                      type(None))
 
-    def _init(self):
+    def init(self):
         try:
             from tensorboardX import SummaryWriter
         except ImportError:

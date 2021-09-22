@@ -29,7 +29,7 @@ from ray import tune
 from metrics import peak_based_f1
 from util import util
 from logger import CustomTBXLogger
-
+from util.visualizer import prediction2fig
 
 
 def train(config):
