@@ -58,11 +58,8 @@ def train(config, checkpoint_dir=None, fixed_config=None):
             if val:
                 opt_strs.append("--{k}".format(k=key))
 
-
-    name = str(tune.get_trial_dir())
-
     opt_str = " ".join(opt_strs)
-    opt_str += " --name rt_{}_{}".format(fixed_config["other"]["name_prefix"], name)
+    opt_str += " --name rt_{}_{}".format(fixed_config["other"]["name_prefix"], tune.get_trial_id())
 
     #if checkpoint_dir:
     #    print("Checkpoint should be loaded from " + checkpoint_dir)
@@ -83,9 +80,10 @@ def train(config, checkpoint_dir=None, fixed_config=None):
 
     # Override model loading
     if checkpoint_dir:
+        print("Loading checkpoint from file: " + checkpoint_dir)
         for name in model.model_names:
             if isinstance(name, str):
-                checkpoint = os.path.join(checkpoint_dir, "checkpoint_{}".format(name))
+                checkpoint = os.path.join(checkpoint_dir, "{}_checkpoint".format(name))
                 net = getattr(model, 'net' + name)
                 if isinstance(net, torch.nn.DataParallel):
                     net = net.module
@@ -114,22 +112,6 @@ def train(config, checkpoint_dir=None, fixed_config=None):
             model.set_input(data)         # unpack data from dataset and apply preprocessing
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
-        if epoch % opt.save_epoch_freq == 0:              # cache our model every <save_epoch_freq> epochs
-            print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
-            with tune.checkpoint_dir(step=epoch) as checkpoint_dir:
-
-                for name in model.model_names:
-                    path = os.path.join(checkpoint_dir, "checkpoint_{}".format(name))
-
-                    if isinstance(name, str):
-                        net = getattr(model, 'net' + name)
-
-                        if len(model.gpu_ids) > 0 and torch.cuda.is_available():
-                            torch.save(net.module.cpu().state_dict(), path)
-                            net.cuda(model.gpu_ids[0])
-                        else:
-                            torch.save(net.cpu().state_dict(), path)
-
         if epoch % fixed_config['val']['metric_freq'] == 0:
             print('running validation at the end of epoch %d' % (epoch))
             for i, data in enumerate(val_dataset):
@@ -147,6 +129,20 @@ def train(config, checkpoint_dir=None, fixed_config=None):
                 if i == 0:
                     logger.log_figure("image", prediction2fig(source, true, pred, f1), step=epoch)
                 tune.report(f1=f1['f1'])
+
+            print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
+            with tune.checkpoint_dir(step=epoch) as checkpoint_dir:
+                for name in model.model_names:
+                    path = os.path.join(checkpoint_dir, "{}_checkpoint".format(name))
+
+                    if isinstance(name, str):
+                        net = getattr(model, 'net' + name)
+
+                        if len(model.gpu_ids) > 0 and torch.cuda.is_available():
+                            torch.save(net.module.cpu().state_dict(), path)
+                            net.cuda(model.gpu_ids[0])
+                        else:
+                            torch.save(net.cpu().state_dict(), path)
 
         print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
 
@@ -194,17 +190,12 @@ if __name__ == '__main__':
 
     bohb_hyperband = HyperBandForBOHB(
         time_attr="training_iteration",
-        max_t=5000,
-        mode="max",
-        metric="f1",
-        reduction_factor=4,
+        max_t=int(fixed_config["train"]["max_dataset_size"]) * (int(fixed_config["train"]["n_epochs"]) + int(fixed_config["train"]["n_epochs_decay"])),
         stop_last_trials=False
     )
 
     bohb_search = TuneBOHB(
-        max_concurrent=4,
-        mode="max",
-        metric="f1"
+        max_concurrent=5
     )
 
     analysis = tune.run(
@@ -214,10 +205,12 @@ if __name__ == '__main__':
         scheduler=bohb_hyperband,
         search_alg=bohb_search,
         num_samples=5,
+        metric="f1",
+        mode="max",
         #stop={"training_iteration": 150},
         resources_per_trial={"cpu": 32, "gpu": 1},
         local_dir="/project/ag-pp2/13_ron/masterthesis_workingdir/Trainings/pix2pix/ray_tune",
-        verbose=2
+        verbose=3
     )
 
     print("Best hyperparameters found were: ", analysis.best_config)
