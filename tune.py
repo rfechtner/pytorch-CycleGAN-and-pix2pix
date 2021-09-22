@@ -197,7 +197,7 @@ if __name__ == '__main__':
         "batch_size": tune.choice([1, 4, 8]),
         "lr": tune.loguniform(1e-4, 1e-2),
         "gan_mode": tune.choice(["vanilla", "lsgan", "wgangp"]),
-        "lr_policy": tune.choice(["linear", "step", "plateau", "cosine"]),
+        "lr_policy": tune.choice(["linear", "step", "cosine"]),
         "lambda_L1": tune.lograndint(1, 1000)
     }
 
