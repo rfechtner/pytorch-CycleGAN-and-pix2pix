@@ -33,7 +33,10 @@ from logger import CustomTBXLogger
 
 
 def train(config):
-    logger = CustomTBXLogger()
+    logger = CustomTBXLogger(
+        config=config,
+        logdir=tune.get_trial_dir()
+    )
 
     logger.init(
         name=logger.trial_id,
