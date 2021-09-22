@@ -193,8 +193,6 @@ if __name__ == '__main__':
         config=config,
         scheduler=bohb_hyperband,
         search_alg=bohb_search,
-        metric="f1",
-        mode="max",
         #stop={"training_iteration": 150},
         resources_per_trial={"cpu": 26, "gpu": 1},
         local_dir="/project/ag-pp2/13_ron/masterthesis_workingdir/Trainings/pix2pix/ray_tune",
