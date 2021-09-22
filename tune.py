@@ -224,7 +224,7 @@ if __name__ == '__main__':
         config=tuneable_config,
         scheduler=bohb_hyperband,
         search_alg=bohb_search,
-        num_samples=5,
+        num_samples=2,
         metric="f1",
         mode="max",
         #stop={"training_iteration": 150},
