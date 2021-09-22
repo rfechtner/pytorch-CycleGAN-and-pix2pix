@@ -57,7 +57,7 @@ class BaseOptions():
         self.initialized = True
         return parser
 
-    def gather_options(self):
+    def gather_options(self, opt_str=None):
         """Initialize our parser with basic options(only once).
         Add additional model-specific and dataset-specific options.
         These options are defined in the <modify_commandline_options> function
@@ -83,7 +83,11 @@ class BaseOptions():
 
         # save and return the parser
         self.parser = parser
-        return parser.parse_args()
+
+        if opt_str is not None:
+            return parser.parse_args(shlex.split(opt_str))
+        else:
+            return parser.parse_args()
 
     def print_options(self, opt):
         """Print and save options
@@ -110,9 +114,9 @@ class BaseOptions():
             opt_file.write(message)
             opt_file.write('\n')
 
-    def parse(self):
+    def parse(self, opt_str=None):
         """Parse our options, create checkpoints directory suffix, and set up gpu device."""
-        opt = self.gather_options()
+        opt = self.gather_options(opt_str)
         opt.isTrain = self.isTrain   # train or test
 
         # process opt.suffix

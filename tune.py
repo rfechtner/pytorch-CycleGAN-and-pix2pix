@@ -24,6 +24,7 @@ from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
 from sklearn.utils import Bunch
+import shlex
 
 
 def tune(opt):
@@ -83,18 +84,8 @@ def tune(opt):
 
 
 if __name__ == '__main__':
-    opt = TrainOptions().gather_options()
+    opt_str = '--model pix2pix --dataroot "./../../Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/" --name test --input_nc 1 --output_nc 1 --display_id 0'
+    opt = TrainOptions().parse(opt_str)
 
-    config = dict({key: TrainOptions().get_default(key) for key in vars(opt)})
-    config.update({
-            "model": "pix2pix",
-            "dataroot": "./../../Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
-            "name": "test",
-            "input_nc": 1,
-            "output_nc": 1,
-            "display_id": 0
-    })
-
-    opt = Bunch(**config)
-
+    print(opt)
     tune(opt)
