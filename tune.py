@@ -30,15 +30,7 @@ from metrics import peak_based_f1
 
 
 def train(config):
-
-    ### Get training options from config
-    opt_str = """\
-        --model pix2pix \
-        --dataroot "{dataroot}" \
-        --name test \
-        --input_nc 1 \
-        --output_nc 1 \
-        --display_id 0""".format(**config)
+    opt_str = " ".join(["--{k} {v}".format(k=key, v=val) for key, val in config.items()])
     opt = TrainOptions().parse(opt_str=opt_str)
 
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
