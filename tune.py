@@ -212,6 +212,7 @@ if __name__ == '__main__':
         config=tuneable_config,
         scheduler=bohb_hyperband,
         search_alg=bohb_search,
+        num_samples=20,
         #stop={"training_iteration": 150},
         resources_per_trial={"cpu": 32, "gpu": 1},
         local_dir="/project/ag-pp2/13_ron/masterthesis_workingdir/Trainings/pix2pix/ray_tune",
