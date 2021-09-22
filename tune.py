@@ -87,8 +87,8 @@ def train(config, checkpoint_dir=None, fixed_config=None):
         print(" -> " + str(path))
         with open(path) as f:
             state = json.loads(f.read())
-            opt.epoch_count = state["step"]
-            total_iters += state["iter"]
+            opt.epoch_count = state["step"] + 1
+            total_iters += state["iter"] + 1
 
         for name in model.model_names:
             if isinstance(name, str):
@@ -98,10 +98,8 @@ def train(config, checkpoint_dir=None, fixed_config=None):
                 net = getattr(model, 'net' + name)
                 if isinstance(net, torch.nn.DataParallel):
                     net = net.module
-                print('loading the model from %s' % checkpoint)
-                # if you are using PyTorch newer than 0.4 (e.g., built from
-                # GitHub source), you can remove str() on self.device
-                state_dict = torch.load(checkpoint, map_location=str(model.device))
+
+                state_dict = torch.load(checkpoint, map_location=model.device)
                 if hasattr(state_dict, '_metadata'):
                     del state_dict._metadata
 
