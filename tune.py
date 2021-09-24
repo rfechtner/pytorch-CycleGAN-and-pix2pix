@@ -221,7 +221,7 @@ if __name__ == '__main__':
                 "checkpoints_dir": "/project/ag-pp2/13_ron/masterthesis_workingdir/Trainings/pix2pix/ray_tune/checkpoints"
             },
             "val": {
-                "metric_freq": 5
+                "metric_freq": 15
             }
     }
 
