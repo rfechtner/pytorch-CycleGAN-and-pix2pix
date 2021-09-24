@@ -188,16 +188,16 @@ if __name__ == '__main__':
     ray.init(dashboard_host='0.0.0.0')
 
     tuneable_config = {
-        "ngf": tune.choice([16, 32, 64, 128]),
+        "ngf": tune.choice([32, 64]), # 16 too little, 128 too high
         "ndf": tune.choice([16, 32, 64, 128]),
-        "netD": tune.choice(["basic", "n_layers", "pixel"]),
-        "netG": tune.choice(["resnet_9blocks", "resnet_6blocks", "unet_256", "unet_128"]),
-        "n_layers_D": tune.choice([0, 3, 5]),
-        "norm": tune.choice(["instance", "batch", "none"]),
+        "netD": tune.choice(["basic", "pixel"]), # "n_layers"
+        "netG": tune.choice(["resnet_9blocks", "unet_256", "unet_128"]), # "resnet_6blocks" worst of all
+        "n_layers_D": 3, ## 0, 3, 5 excluded from training as n_layers was inefficient
+        "norm": tune.choice(["instance", "batch"]), # , "none" bad
         "batch_size": tune.choice([1, 4, 8]),
         "lr": tune.loguniform(1e-4, 1e-2),
-        "gan_mode": tune.choice(["vanilla", "lsgan", "wgangp"]),
-        "lr_policy": tune.choice(["linear", "step", "cosine"]),
+        "gan_mode": tune.choice(["vanilla", "wgangp"]), # "lsgan" bad
+        "lr_policy": tune.choice(["linear", "cosine"]), # "step"
         "lambda_L1": tune.lograndint(1, 1000)
     }
 
