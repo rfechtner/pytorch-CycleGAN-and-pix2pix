@@ -203,14 +203,14 @@ if __name__ == '__main__':
 
     fixed_config = {
             "other": {
-                "name_prefix": "BF2PSIVA"
+                "name_prefix": "LF2PSIVA"
             },
             "train": {
                 "model": "pix2pix",
                 "input_nc": 1,
                 "output_nc": 1,
                 "max_dataset_size": 500,
-                "dataroot": "/project/ag-pp2/13_ron/masterthesis_workingdir/Datasets/new/BF2FLAVG_cropped_4th_rnd3rd/",
+                "dataroot": "/project/ag-pp2/13_ron/masterthesis_workingdir/Datasets/new/LF2FLAVG_cropped_4th_rnd3rd/",
                 "n_epochs": 100,
                 "n_epochs_decay": 50,
                 "save_epoch_freq": 25,
@@ -237,7 +237,7 @@ if __name__ == '__main__':
 
     analysis = tune.run(
         tune.with_parameters(train, fixed_config=fixed_config),
-        name="bf_tune",
+        name="lf_tune",
         config=tuneable_config,
         scheduler=bohb_hyperband,
         search_alg=bohb_search,
@@ -253,4 +253,4 @@ if __name__ == '__main__':
     print("Best hyperparameters found were: ", analysis.best_config)
 
     df = analysis.results_df
-    df.to_csv("/project/ag-pp2/13_ron/masterthesis_workingdir/Trainings/pix2pix/ray_tune/bf_tune/analysis.csv")
+    df.to_csv("/project/ag-pp2/13_ron/masterthesis_workingdir/Trainings/pix2pix/ray_tune/lf_tune/analysis.csv")
