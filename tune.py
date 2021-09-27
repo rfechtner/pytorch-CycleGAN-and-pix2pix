@@ -195,7 +195,7 @@ if __name__ == '__main__':
         "n_layers_D": 3, ## 0, 3, 5 excluded from training as n_layers was inefficient
         "norm": tune.choice(["instance", "batch"]), # , "none" bad
         "batch_size": tune.choice([1, 4, 8]),
-        "lr": tune.loguniform(5e-5, 1e-3), #
+        "lr": tune.loguniform(1e-4, 1e-3), #
         "gan_mode": tune.choice(["vanilla", "wgangp"]), # "lsgan" bad
         "lr_policy": tune.choice(["linear", "cosine"]), # "step"
         "lambda_L1": tune.lograndint(1, 1000)
